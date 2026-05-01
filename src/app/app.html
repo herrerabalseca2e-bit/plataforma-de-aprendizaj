@@ -1,0 +1,577 @@
+<main class="app-shell">
+  @if (loadingSession()) {
+    <section class="loading-card">
+      <strong>Estamos preparando tu aula...</strong>
+      <p>Espera un momento mientras cargamos tu sesion.</p>
+    </section>
+  } @else if (!currentUser()) {
+    <section class="landing-shell">
+      <article class="landing-copy">
+        <span class="section-chip">Pagina principal</span>
+        <h1>Aprender en la escuela puede ser una aventura bonita.</h1>
+        <p>
+          Inicia sesion o crea tu cuenta para entrar a las clases, responder evaluaciones,
+          guardar tu progreso y ver videos paso a paso.
+        </p>
+
+        <div class="landing-stats">
+          <article>
+            <strong>4</strong>
+            <span>asignaturas escolares</span>
+          </article>
+          <article>
+            <strong>5</strong>
+            <span>preguntas por evaluacion</span>
+          </article>
+          <article>
+            <strong>3</strong>
+            <span>roles de usuario</span>
+          </article>
+        </div>
+
+        <div class="mascot-strip">
+          @for (subject of subjects; track subject.id) {
+            <article class="mascot-card" [style.--subject-color]="subject.color">
+              <span>{{ subject.mascot }}</span>
+              <strong>{{ subject.name }}</strong>
+              <small>{{ subject.mascotName }}</small>
+            </article>
+          }
+        </div>
+      </article>
+
+      <article class="auth-card">
+        <div class="card-header">
+          <div>
+            <span class="section-chip">Acceso</span>
+            <h2>{{ authMode() === 'login' ? 'Inicia sesion' : 'Crea tu cuenta' }}</h2>
+          </div>
+        </div>
+
+        <div class="auth-toggle">
+          <button
+            type="button"
+            [class.is-active]="authMode() === 'login'"
+            (click)="authMode.set('login'); authMessage.set('')"
+          >
+            Entrar
+          </button>
+          <button
+            type="button"
+            [class.is-active]="authMode() === 'register'"
+            (click)="authMode.set('register'); authMessage.set('')"
+          >
+            Registrarme
+          </button>
+        </div>
+
+        @if (authMessage()) {
+          <div class="notice" [class.is-error]="authMessage().includes('Ups')">
+            {{ authMessage() }}
+          </div>
+        }
+
+        <form class="auth-form" novalidate>
+          @if (authMode() === 'register') {
+            <label>
+              Nombre completo
+              <input type="text" name="name" [(ngModel)]="authForm.name" />
+            </label>
+
+            <label>
+              Tipo de usuario
+              <select name="role" [(ngModel)]="authForm.role">
+                @for (role of roles; track role.value) {
+                  <option [value]="role.value">{{ role.label }}</option>
+                }
+              </select>
+            </label>
+          }
+
+          <label>
+            Correo
+            <input type="email" name="email" [(ngModel)]="authForm.email" />
+          </label>
+
+          <label>
+            Contrasena
+            <input type="password" name="password" [(ngModel)]="authForm.password" />
+          </label>
+
+          <button type="button" class="primary-button" [disabled]="submittingAuth()" (click)="submitAuth()">
+            {{ submittingAuth() ? 'Guardando...' : authMode() === 'login' ? 'Entrar a la plataforma' : 'Crear cuenta y entrar' }}
+          </button>
+        </form>
+
+        <div class="access-note">
+          <strong>Lo que pasara despues</strong>
+          <p>Cuando entres, se abrira la plataforma de clases con modulos, videos, actividades y panel personal.</p>
+        </div>
+      </article>
+    </section>
+  } @else {
+    <section class="platform-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-badge">AE</span>
+          <div>
+            <strong>{{ schoolName }}</strong>
+            <small>{{ currentUser()!.name }} - {{ currentRoleLabel() }}</small>
+          </div>
+        </div>
+
+        <div class="session-pill">
+          <strong>Sesion iniciada</strong>
+          <span>{{ currentUser()!.email }}</span>
+        </div>
+
+        <button type="button" class="secondary-button" (click)="logout()">Cerrar sesion</button>
+      </header>
+
+      <section class="platform-hero">
+        <div>
+          <span class="section-chip">Ya estas dentro</span>
+          <h2>Bienvenido a tus clases, {{ currentUser()!.name }}</h2>
+          <p>
+            Escoge una asignatura para leer la leccion, practicar, ver tus videos en orden y completar la evaluacion.
+          </p>
+        </div>
+
+        <div class="summary-box">
+          <strong>{{ overallCompletion() }}%</strong>
+          <span>avance general</span>
+          <div class="progress-bar">
+            <span [style.width.%]="overallCompletion()"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <aside class="subjects-panel">
+          <div class="panel-header">
+            <span class="section-chip">Asignaturas</span>
+            <h2>Escoge tu clase</h2>
+          </div>
+
+          <div class="subjects-list">
+            @for (subject of subjects; track subject.id) {
+              <button
+                type="button"
+                class="subject-card"
+                [class.is-selected]="selectedSubjectId() === subject.id"
+                [style.--subject-color]="subject.color"
+                (click)="selectSubject(subject.id)"
+              >
+                <div class="subject-card-top">
+                  <span class="subject-mascot">{{ subject.mascot }}</span>
+                  <div>
+                    <strong>{{ subject.name }}</strong>
+                    <small>{{ subject.mascotName }}</small>
+                  </div>
+                </div>
+                <span>{{ subject.tagline }}</span>
+              </button>
+            }
+          </div>
+        </aside>
+
+        <section class="lesson-panel">
+          <div class="lesson-hero">
+            <div class="module-banner" [style.--subject-color]="selectedSubject().color">
+              <img [src]="selectedSubject().image" [alt]="selectedSubject().name" />
+              <div class="module-banner-copy">
+                <strong>{{ selectedSubject().bannerTitle }}</strong>
+                <span>{{ selectedSubject().mascotName }}</span>
+              </div>
+            </div>
+
+            <div class="lesson-copy">
+              <span class="section-chip">Leccion digital</span>
+              <div class="lesson-mascot-line">
+                <span class="lesson-mascot">{{ selectedSubject().mascot }}</span>
+                <strong>{{ selectedSubject().name }}</strong>
+              </div>
+              <h2>{{ selectedSubject().lessonTitle }}</h2>
+              <p>{{ selectedSubject().introduction }}</p>
+
+              <div class="subject-about">
+                <strong>Sobre esta asignatura</strong>
+                <p>{{ selectedSubject().about }}</p>
+              </div>
+            </div>
+          </div>
+
+          @if (infoMessage()) {
+            <div class="notice">{{ infoMessage() }}</div>
+          }
+
+          <article class="lesson-card">
+            <h3>Explicacion sencilla</h3>
+            <p>{{ selectedSubject().explanation }}</p>
+          </article>
+
+          <div class="examples-grid">
+            @for (example of selectedSubject().examples; track example.title) {
+              <article class="lesson-card">
+                <h3>{{ example.title }}</h3>
+                <p>{{ example.text }}</p>
+              </article>
+            }
+          </div>
+
+          <article class="lesson-card">
+            <div class="card-header">
+              <div>
+                <h3>Actividades practicas</h3>
+                <p>Marca cada actividad cuando la hayas terminado.</p>
+              </div>
+
+              <button type="button" class="small-button" (click)="markLessonComplete()">
+                Marcar leccion revisada
+              </button>
+            </div>
+
+            <div class="activity-list">
+              @for (activity of selectedSubject().activities; track activity; let activityIndex = $index) {
+                <label class="activity-item">
+                  <input
+                    type="checkbox"
+                    [checked]="isActivityCompleted(activityIndex)"
+                    (change)="toggleActivity(activityIndex)"
+                  />
+                  <span>{{ activity }}</span>
+                </label>
+              }
+            </div>
+          </article>
+
+          <article class="lesson-card">
+            <div class="card-header">
+              <div>
+                <h3>Videos de {{ selectedSubject().name }}</h3>
+                <p>El siguiente video se abre solo cuando termines de ver el anterior completo.</p>
+              </div>
+
+              @if (canManageVideos()) {
+                <label class="upload-button">
+                  Subir video
+                  <input type="file" accept="video/*" (change)="handleVideoUpload($event)" />
+                </label>
+              }
+            </div>
+
+            @if (videoMessage()) {
+              <div class="notice">{{ videoMessage() }}</div>
+            }
+
+            @if (activeSubjectVideos().length > 0) {
+              <div class="video-grid">
+                @for (video of activeSubjectVideos(); track video.id; let videoIndex = $index) {
+                  <article class="video-card" [class.is-locked]="isVideoLocked(videoIndex)">
+                    <div class="video-head">
+                      <strong>Video {{ videoIndex + 1 }}</strong>
+                      <span class="video-state" [class.is-open]="!isVideoLocked(videoIndex)">
+                        {{ isVideoLocked(videoIndex) ? 'Candado cerrado' : 'Candado abierto' }}
+                      </span>
+                    </div>
+
+                    <h4>{{ video.name }}</h4>
+                    <p>{{ video.uploadedAt | date: 'short' }}</p>
+
+                    @if (isVideoLocked(videoIndex)) {
+                      <div class="locked-box">
+                        <span class="lock-icon">🔒</span>
+                        <p>Primero termina el video anterior para desbloquear este.</p>
+                      </div>
+                    } @else {
+                      <video
+                        class="subject-video"
+                        controls
+                        preload="metadata"
+                        (ended)="handleVideoEnded(video.id)"
+                      >
+                        <source [src]="video.url" [type]="video.type" />
+                      </video>
+
+                      <div class="video-complete" [class.is-done]="isVideoCompleted(video.id)">
+                        {{ isVideoCompleted(video.id) ? 'Visto por completo' : 'Aun no se ha completado' }}
+                      </div>
+                    }
+
+                    @if (canManageVideos()) {
+                      <button type="button" class="small-button danger-button" (click)="removeVideo(video.id)">
+                        Eliminar video
+                      </button>
+                    }
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="empty-panel">
+                <p>Todavia no hay videos subidos para esta asignatura.</p>
+              </div>
+            }
+          </article>
+
+          <article class="lesson-card evaluation-card">
+            <div class="card-header">
+              <div>
+                <span class="section-chip">Evaluacion</span>
+                <h3>{{ totalQuestions() }} preguntas de opcion multiple</h3>
+              </div>
+
+              @if (quizState() && !quizState()!.finished) {
+                <div class="timer-box" [class.is-warning]="quizState()!.secondsLeft < 60">
+                  {{ formatTime(quizState()!.secondsLeft) }}
+                </div>
+              }
+            </div>
+
+            @if (!quizState()) {
+              <p>
+                Cuando respondas, la plataforma te dira si acertaste o si hubo error y tambien te explicara el por que.
+              </p>
+              <button type="button" class="primary-button" (click)="startQuiz()">Comenzar evaluacion</button>
+            } @else if (!quizState()!.finished && currentQuestion()) {
+              <div class="question-card">
+                <p class="question-counter">
+                  Pregunta {{ quizState()!.currentQuestionIndex + 1 }} de {{ totalQuestions() }}
+                </p>
+                <h4>{{ currentQuestion()!.prompt }}</h4>
+
+                <div class="options-list">
+                  @for (option of currentQuestion()!.options; track option; let optionIndex = $index) {
+                    <button
+                      type="button"
+                      class="option-button"
+                      [disabled]="quizState()!.answers[quizState()!.currentQuestionIndex] !== -1"
+                      [class.is-selected]="quizState()!.answers[quizState()!.currentQuestionIndex] === optionIndex"
+                      (click)="answerQuestion(optionIndex)"
+                    >
+                      {{ option }}
+                    </button>
+                  }
+                </div>
+
+                @if (quizState()!.answers[quizState()!.currentQuestionIndex] !== -1) {
+                  <div class="answer-feedback" [class.is-correct]="quizState()!.lastAnswerCorrect">
+                    <strong>{{ quizState()!.lastAnswerCorrect ? 'Respuesta correcta' : 'Ups te equivocaste' }}</strong>
+                    <p>{{ quizState()!.lastExplanation }}</p>
+                    <button type="button" class="small-button" (click)="goToNextQuestion()">
+                      {{ quizState()!.currentQuestionIndex === 4 ? 'Ver resultado' : 'Siguiente pregunta' }}
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="result-box">
+                <div>
+                  <span class="section-chip">Resultado final</span>
+                  <h4>{{ quizState()!.score }}/100 puntos</h4>
+                  <p>{{ quizState()!.lastExplanation }}</p>
+                </div>
+
+                <div class="stars-row">
+                  @for (star of starsArray(progressForSelectedSubject()?.stars ?? 0); track star) {
+                    <span>*</span>
+                  }
+                  @for (star of emptyStarsArray(progressForSelectedSubject()?.stars ?? 0); track star) {
+                    <span class="empty-star">*</span>
+                  }
+                </div>
+
+                <button type="button" class="primary-button" (click)="startQuiz()">Intentar otra vez</button>
+              </div>
+            }
+          </article>
+
+          @if (canEditEvaluations()) {
+            <article class="lesson-card">
+              <div class="card-header">
+                <div>
+                  <span class="section-chip">Editor de evaluacion</span>
+                  <h3>Editar preguntas de {{ selectedSubject().name }}</h3>
+                </div>
+                <div class="editor-actions">
+                  <button type="button" class="small-button" (click)="addQuizQuestion()">
+                    Agregar pregunta
+                  </button>
+                  <button type="button" class="small-button" (click)="saveQuizEditor()" [disabled]="savingQuiz()">
+                    {{ savingQuiz() ? 'Guardando...' : 'Guardar evaluacion' }}
+                  </button>
+                </div>
+              </div>
+
+              @if (quizEditorMessage()) {
+                <div class="notice" [class.is-error]="quizEditorMessage().includes('Ups')">
+                  {{ quizEditorMessage() }}
+                </div>
+              }
+
+              <div class="quiz-editor-grid">
+                @for (question of quizEditor(); track $index; let questionIndex = $index) {
+                  <article class="quiz-editor-card">
+                    <div class="quiz-editor-head">
+                      <h4>Pregunta {{ questionIndex + 1 }}</h4>
+                      <button type="button" class="small-button danger-button" (click)="removeQuizQuestion(questionIndex)">
+                        Quitar
+                      </button>
+                    </div>
+
+                    <label>
+                      Enunciado
+                      <textarea
+                        [value]="question.prompt"
+                        (input)="updateQuizEditorQuestion(questionIndex, 'prompt', $any($event.target).value)"
+                      ></textarea>
+                    </label>
+
+                    <div class="quiz-editor-options">
+                      @for (option of question.options; track $index; let optionIndex = $index) {
+                        <label>
+                          Opcion {{ optionIndex + 1 }}
+                          <input
+                            type="text"
+                            [value]="option"
+                            (input)="updateQuizEditorOption(questionIndex, optionIndex, $any($event.target).value)"
+                          />
+                        </label>
+                      }
+                    </div>
+
+                    <label>
+                      Respuesta correcta
+                      <select
+                        [value]="question.correctIndex"
+                        (change)="updateQuizCorrectOption(questionIndex, $any($event.target).value)"
+                      >
+                        <option value="0">Opcion 1</option>
+                        <option value="1">Opcion 2</option>
+                        <option value="2">Opcion 3</option>
+                        <option value="3">Opcion 4</option>
+                      </select>
+                    </label>
+
+                    <label>
+                      Explicacion
+                      <textarea
+                        [value]="question.explanation"
+                        (input)="updateQuizEditorQuestion(questionIndex, 'explanation', $any($event.target).value)"
+                      ></textarea>
+                    </label>
+                  </article>
+                }
+              </div>
+            </article>
+          }
+        </section>
+      </section>
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <span class="section-chip">Mi panel</span>
+          <h2>Progreso y puntajes</h2>
+        </div>
+
+        <div class="dashboard-grid">
+          @for (card of dashboardCards(); track card.id) {
+            <article class="dashboard-card">
+              <div class="dashboard-card-top">
+                <span class="dashboard-mascot">{{ card.mascot }}</span>
+                <h3>{{ card.name }}</h3>
+              </div>
+              <p>{{ card.lessonCompleted ? 'Leccion revisada' : 'Leccion pendiente' }}</p>
+              <p>Actividades: {{ card.activitiesDone }}/{{ card.totalActivities }}</p>
+              <p>Mejor puntaje: {{ card.bestScore }}/100</p>
+              <div class="stars-row">
+                @for (star of starsArray(card.stars); track star) {
+                  <span>*</span>
+                }
+                @for (star of emptyStarsArray(card.stars); track star) {
+                  <span class="empty-star">*</span>
+                }
+              </div>
+              <p>{{ card.feedback }}</p>
+            </article>
+          }
+        </div>
+
+        @if (canReviewStudents()) {
+          <div class="teacher-panel">
+            <div class="panel-header">
+              <span class="section-chip">
+                {{ currentUser()!.role === 'gerente' ? 'Vista gerente' : 'Vista docente' }}
+              </span>
+              <h2>Progreso de los estudiantes</h2>
+            </div>
+
+            <div class="student-filters">
+              <label>
+                Buscar estudiante
+                <input
+                  type="text"
+                  [value]="studentSearch()"
+                  (input)="studentSearch.set($any($event.target).value)"
+                  placeholder="Escribe un nombre o correo"
+                />
+              </label>
+
+              <label>
+                Filtrar por asignatura
+                <select
+                  [value]="studentSubjectFilter()"
+                  (change)="studentSubjectFilter.set($any($event.target).value)"
+                >
+                  <option value="todas">Todas las asignaturas</option>
+                  @for (subject of subjects; track subject.id) {
+                    <option [value]="subject.id">{{ subject.name }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            @if (filteredStudentOverviewCards().length > 0) {
+              <div class="student-review-grid">
+                @for (student of filteredStudentOverviewCards(); track student.email) {
+                  <article class="student-review-card" [class.is-high]="progressTone(student.completedModules, student.totalModules) === 'high'" [class.is-medium]="progressTone(student.completedModules, student.totalModules) === 'medium'" [class.is-low]="progressTone(student.completedModules, student.totalModules) === 'low'">
+                    <div class="student-review-head">
+                      <div>
+                        <h3>{{ student.name }}</h3>
+                        <p>{{ student.email }}</p>
+                      </div>
+                      <div class="student-summary-pill">
+                        {{ student.completedModules }}/{{ student.totalModules }} modulos
+                      </div>
+                    </div>
+
+                    <div class="student-review-stats">
+                      <span>Mejor puntaje: {{ student.bestScore }}/100</span>
+                      <span>Videos vistos: {{ student.watchedVideos }}</span>
+                      <span>Estrellas promedio: {{ student.averageStars }}/5</span>
+                    </div>
+
+                    <div class="student-subject-grid">
+                      @for (subject of student.subjects; track subject.id) {
+                        <article class="student-subject-card">
+                          <strong>{{ subject.name }}</strong>
+                          <span>{{ subject.lessonCompleted ? 'Leccion revisada' : 'Leccion pendiente' }}</span>
+                          <span>Puntaje: {{ subject.bestScore }}/100</span>
+                          <span>Estrellas: {{ subject.stars }}/5</span>
+                          <p>{{ subject.feedback }}</p>
+                        </article>
+                      }
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="empty-panel">
+                <p>No se encontraron estudiantes con ese nombre o con esa asignatura.</p>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </section>
+  }
+</main>

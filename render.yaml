@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: aula-escolar-infantil
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: STORAGE_DIR
+        value: /opt/render/project/src/render-storage
+    disk:
+      name: aula-escolar-storage
+      mountPath: /opt/render/project/src/render-storage
+      sizeGB: 1

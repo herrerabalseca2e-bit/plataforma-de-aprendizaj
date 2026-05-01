@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4efe6;
+}
+
+* {
+  box-sizing: border-box;
+}

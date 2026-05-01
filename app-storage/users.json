@@ -1,0 +1,143 @@
+[
+  {
+    "name": "wendy abigail",
+    "email": "abigailbelen1416@hotmail.com",
+    "password": "1234",
+    "role": "gerente",
+    "progress": {
+      "matematica": {
+        "lessonCompleted": true,
+        "completedActivities": [
+          0,
+          1,
+          2
+        ],
+        "latestScore": 60,
+        "bestScore": 60,
+        "stars": 3,
+        "feedback": "Buen trabajo. Practica un poco mas para subir tu puntaje.",
+        "quizzesTaken": 1
+      },
+      "historia": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 60,
+        "bestScore": 60,
+        "stars": 3,
+        "feedback": "Buen trabajo. Practica un poco mas para subir tu puntaje.",
+        "quizzesTaken": 1
+      },
+      "lengua": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 20,
+        "bestScore": 20,
+        "stars": 1,
+        "feedback": "Ups, te equivocaste en varias respuestas. Revisa la leccion y vuelve a intentarlo.",
+        "quizzesTaken": 1
+      },
+      "ciencias": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 20,
+        "bestScore": 20,
+        "stars": 1,
+        "feedback": "Ups, te equivocaste en varias respuestas. Revisa la leccion y vuelve a intentarlo.",
+        "quizzesTaken": 1
+      }
+    },
+    "completedVideoIds": []
+  },
+  {
+    "name": "Daniela Belen",
+    "email": "danielabelen1614@hotmai.com",
+    "password": "1234",
+    "role": "estudiante",
+    "progress": {
+      "matematica": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 20,
+        "bestScore": 20,
+        "stars": 1,
+        "feedback": "Ups, te equivocaste en varias respuestas. Revisa la leccion y vuelve a intentarlo.",
+        "quizzesTaken": 1
+      },
+      "historia": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 0,
+        "bestScore": 0,
+        "stars": 0,
+        "feedback": "Aun no has presentado la evaluacion.",
+        "quizzesTaken": 0
+      },
+      "lengua": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 0,
+        "bestScore": 0,
+        "stars": 0,
+        "feedback": "Aun no has presentado la evaluacion.",
+        "quizzesTaken": 0
+      },
+      "ciencias": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 100,
+        "bestScore": 100,
+        "stars": 5,
+        "feedback": "Excelente. Respondiste muy bien y ganaste muchas estrellas.",
+        "quizzesTaken": 1
+      }
+    },
+    "completedVideoIds": [
+      "b0c2c104-9f38-447d-8da7-d8b6b473d77f"
+    ]
+  },
+  {
+    "name": "Gabriela Balseca",
+    "email": "gabyante@hotmail.com",
+    "password": "1234",
+    "role": "docente",
+    "progress": {
+      "matematica": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 0,
+        "bestScore": 0,
+        "stars": 0,
+        "feedback": "Aun no has presentado la evaluacion.",
+        "quizzesTaken": 0
+      },
+      "historia": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 0,
+        "bestScore": 0,
+        "stars": 0,
+        "feedback": "Aun no has presentado la evaluacion.",
+        "quizzesTaken": 0
+      },
+      "lengua": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 0,
+        "bestScore": 0,
+        "stars": 0,
+        "feedback": "Aun no has presentado la evaluacion.",
+        "quizzesTaken": 0
+      },
+      "ciencias": {
+        "lessonCompleted": false,
+        "completedActivities": [],
+        "latestScore": 0,
+        "bestScore": 0,
+        "stars": 0,
+        "feedback": "Aun no has presentado la evaluacion.",
+        "quizzesTaken": 0
+      }
+    },
+    "completedVideoIds": []
+  }
+]
