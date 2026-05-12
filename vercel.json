@@ -1,12 +1,11 @@
 {
-  "version": 3,
+  "version": 2,
   "builds": [
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist/proyecto/browser",
-        "buildCommand": "npm run build"
+        "distDir": "dist/proyecto/browser"
       }
     },
     {
@@ -17,15 +16,18 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "src/server.ts"
     },
     {
       "src": "/uploaded-videos/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "src/server.ts"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "src/server.ts"
     }
   ]
 }
