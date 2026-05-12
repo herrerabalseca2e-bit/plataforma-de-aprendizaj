@@ -49,7 +49,9 @@ interface StoredVideoRecord {
 }
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
-const storageFolder = process.env['STORAGE_DIR'] || join(process.cwd(), 'app-storage');
+const storageFolder =
+  process.env['STORAGE_DIR'] ||
+  (process.env['VERCEL'] ? join('/tmp', 'app-storage') : join(process.cwd(), 'app-storage'));
 const uploadFolder = join(storageFolder, 'uploaded-videos');
 const videosFile = join(storageFolder, 'videos.json');
 const usersFile = join(storageFolder, 'users.json');
