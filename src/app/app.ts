@@ -72,6 +72,15 @@ interface SubjectVideo {
   url: string;
 }
 
+interface LocalSubjectVideo {
+  id: string;
+  subjectId: SubjectId;
+  name: string;
+  type: string;
+  uploadedAt: string;
+  fileName: string;
+}
+
 interface QuizSession {
   subjectId: SubjectId;
   currentQuestionIndex: number;
@@ -887,62 +896,16 @@ export class App implements OnInit, OnDestroy {
     }
 
     const input = event.target as HTMLInputElement;
-    const files = input.files;
-    if (!files || files.length === 0) {
-      return;
-    }
-
-    const file = files[0];
-
-    try {
-      const dataBase64 = await this.fileToDataUrl(file);
-      const response = await fetch(apiUrl('/api/videos'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          subjectId: this.selectedSubject().id,
-          name: file.name,
-          type: file.type || 'video/mp4',
-          dataBase64
-        })
-      });
-
-      const result = (await response.json().catch(() => ({}))) as ApiResponse<{ video?: SubjectVideo }>;
-      if (!response.ok) {
-        this.videoMessage.set(result.message ?? 'No se pudo guardar el video.');
-        return;
-      }
-
-      input.value = '';
-      await this.loadStoredVideos();
-      this.videoMessage.set(`Video guardado en ${this.selectedSubject().name}.`);
-    } catch {
-      this.videoMessage.set('No se pudo subir el video al servidor.');
-    }
+    input.value = '';
+    this.videoMessage.set('Los videos se cargan desde la carpeta app-storage/uploaded-videos y el archivo app-storage/videos.json.');
   }
 
-  protected async removeVideo(videoId: string): Promise<void> {
+  protected async removeVideo(_videoId: string): Promise<void> {
     if (!this.canManageVideos()) {
       return;
     }
 
-    try {
-      const response = await fetch(apiUrl(`/api/videos/${encodeURIComponent(videoId)}`), {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        this.videoMessage.set('No se pudo eliminar el video.');
-        return;
-      }
-
-      await this.loadStoredVideos();
-      this.videoMessage.set('Video eliminado correctamente.');
-    } catch {
-      this.videoMessage.set('No se pudo eliminar el video.');
-    }
+    this.videoMessage.set('Para quitar un video, elimina el archivo de app-storage/uploaded-videos y actualiza app-storage/videos.json.');
   }
 
   protected updateQuizEditorQuestion(
@@ -1163,9 +1126,11 @@ export class App implements OnInit, OnDestroy {
 
   private async loadStoredVideos(): Promise<void> {
     try {
-      const response = await fetch(apiUrl('/api/videos'));
-      const result = (await response.json().catch(() => ({}))) as ApiResponse<{ videos?: SubjectVideo[] }>;
-      const records = result.data?.videos ?? [];
+      const response = await fetch('/app-storage/videos.json');
+      const records = ((await response.json().catch(() => [])) as LocalSubjectVideo[]).map((record) => ({
+        ...record,
+        url: `/app-storage/uploaded-videos/${record.fileName}`
+      }));
       const nextVideos: Record<SubjectId, SubjectVideo[]> = {
         matematica: [],
         historia: [],
