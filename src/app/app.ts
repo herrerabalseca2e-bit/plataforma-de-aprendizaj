@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, NgZone, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../environments/environment.generated';
 
 type SubjectId = 'matematica' | 'historia' | 'lengua' | 'ciencias';
 type UserRole = 'docente' | 'estudiante' | 'gerente';
@@ -82,8 +83,30 @@ interface QuizSession {
   lastAnswerCorrect: boolean | null;
 }
 
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  error?: {
+    status: number;
+    message: string;
+  };
+}
+
 const SESSION_STORAGE_KEY = 'school-platform-session';
 const QUIZ_DURATION_SECONDS = 5 * 60;
+
+function apiUrl(path: string): string {
+  if (environment.apiUrl) {
+    return `${environment.apiUrl.replace(/\/$/, '')}${path}`;
+  }
+
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '4200') {
+    return `http://localhost:4000${path}`;
+  }
+
+  return path;
+}
 
 @Component({
   selector: 'app-root',
@@ -586,7 +609,7 @@ export class App implements OnInit, OnDestroy {
     this.authMessage.set('');
 
     try {
-      const endpoint = this.authMode() === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const endpoint = this.authMode() === 'login' ? apiUrl('/api/auth/login') : apiUrl('/api/auth/register');
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -595,25 +618,25 @@ export class App implements OnInit, OnDestroy {
         body: JSON.stringify(payload)
       });
 
-      const result = (await response.json().catch(() => ({}))) as {
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{
         user?: StoredUser;
-        message?: string;
-      };
+      }>;
+      const user = result.data?.user;
 
-      if (!response.ok || !result.user) {
+      if (!response.ok || !user) {
         this.authMessage.set(result.message ?? 'Ups, te equivocaste: no se pudo procesar el acceso.');
         return;
       }
 
-      this.setCurrentUser(result.user);
+      this.setCurrentUser(user);
       this.authForm.name = '';
       this.authForm.email = '';
       this.authForm.password = '';
       this.authForm.role = 'estudiante';
       this.authMessage.set(
         this.authMode() === 'login'
-          ? `Bienvenido, ${result.user.name}. Ya entraste a la plataforma.`
-          : `Cuenta creada con exito. Bienvenido, ${result.user.name}.`
+          ? `Bienvenido, ${user.name}. Ya entraste a la plataforma.`
+          : `Cuenta creada con exito. Bienvenido, ${user.name}.`
       );
 
       await this.loadStoredVideos();
@@ -840,15 +863,16 @@ export class App implements OnInit, OnDestroy {
 
     try {
       const response = await fetch(
-        `/api/users/${encodeURIComponent(user.email)}/videos/${encodeURIComponent(videoId)}/complete`,
+        apiUrl(`/api/users/${encodeURIComponent(user.email)}/videos/${encodeURIComponent(videoId)}/complete`),
         {
           method: 'POST'
         }
       );
 
-      const result = (await response.json().catch(() => ({}))) as { user?: StoredUser };
-      if (response.ok && result.user) {
-        this.setCurrentUser(result.user);
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{ user?: StoredUser }>;
+      const updatedUser = result.data?.user;
+      if (response.ok && updatedUser) {
+        this.setCurrentUser(updatedUser);
         this.videoMessage.set('Muy bien. Terminaste este video y se desbloqueo el siguiente.');
       }
     } catch {
@@ -872,7 +896,7 @@ export class App implements OnInit, OnDestroy {
 
     try {
       const dataBase64 = await this.fileToDataUrl(file);
-      const response = await fetch('/api/videos', {
+      const response = await fetch(apiUrl('/api/videos'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -885,7 +909,7 @@ export class App implements OnInit, OnDestroy {
         })
       });
 
-      const result = (await response.json().catch(() => ({}))) as { message?: string };
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{ video?: SubjectVideo }>;
       if (!response.ok) {
         this.videoMessage.set(result.message ?? 'No se pudo guardar el video.');
         return;
@@ -905,7 +929,7 @@ export class App implements OnInit, OnDestroy {
     }
 
     try {
-      const response = await fetch(`/api/videos/${encodeURIComponent(videoId)}`, {
+      const response = await fetch(apiUrl(`/api/videos/${encodeURIComponent(videoId)}`), {
         method: 'DELETE'
       });
 
@@ -990,7 +1014,7 @@ export class App implements OnInit, OnDestroy {
     this.quizEditorMessage.set('');
 
     try {
-      const response = await fetch(`/api/quizzes/${this.selectedSubject().id}`, {
+      const response = await fetch(apiUrl(`/api/quizzes/${this.selectedSubject().id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -998,18 +1022,18 @@ export class App implements OnInit, OnDestroy {
         body: JSON.stringify({ quiz })
       });
 
-      const result = (await response.json().catch(() => ({}))) as {
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{
         quiz?: QuizQuestion[];
-        message?: string;
-      };
+      }>;
+      const savedQuiz = result.data?.quiz;
 
-      if (!response.ok || !result.quiz) {
+      if (!response.ok || !savedQuiz) {
         this.quizEditorMessage.set(result.message ?? 'No se pudo guardar la evaluacion.');
         return;
       }
 
-      this.replaceSubjectQuiz(this.selectedSubject().id, result.quiz);
-      this.quizEditor.set(result.quiz.map((question) => ({ ...question, options: [...question.options] })));
+      this.replaceSubjectQuiz(this.selectedSubject().id, savedQuiz);
+      this.quizEditor.set(savedQuiz.map((question) => ({ ...question, options: [...question.options] })));
       this.resetQuizView();
       this.quizEditorMessage.set('La evaluacion fue actualizada correctamente.');
     } catch {
@@ -1064,13 +1088,14 @@ export class App implements OnInit, OnDestroy {
     }
 
     try {
-      const response = await fetch(`/api/users/${encodeURIComponent(savedEmail)}`);
-      const result = (await response.json().catch(() => ({}))) as { user?: StoredUser };
+      const response = await fetch(apiUrl(`/api/users/${encodeURIComponent(savedEmail)}`));
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{ user?: StoredUser }>;
+      const user = result.data?.user;
 
-      if (!response.ok || !result.user) {
+      if (!response.ok || !user) {
         this.clearSession();
       } else {
-        this.currentUser.set(result.user);
+        this.currentUser.set(user);
         await this.loadStoredVideos();
         await this.loadStudentsProgress();
         await this.loadStoredQuizzes();
@@ -1109,7 +1134,7 @@ export class App implements OnInit, OnDestroy {
     const nextProgress = updater(user.progress[subjectId]);
 
     try {
-      const response = await fetch(`/api/users/${encodeURIComponent(user.email)}/progress`, {
+      const response = await fetch(apiUrl(`/api/users/${encodeURIComponent(user.email)}/progress`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -1120,17 +1145,17 @@ export class App implements OnInit, OnDestroy {
         })
       });
 
-      const result = (await response.json().catch(() => ({}))) as {
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{
         user?: StoredUser;
-        message?: string;
-      };
+      }>;
+      const updatedUser = result.data?.user;
 
-      if (!response.ok || !result.user) {
+      if (!response.ok || !updatedUser) {
         this.infoMessage.set(result.message ?? 'No se pudo guardar el progreso.');
         return;
       }
 
-      this.setCurrentUser(result.user);
+      this.setCurrentUser(updatedUser);
     } catch {
       this.infoMessage.set('No se pudo guardar el progreso en la base de datos.');
     }
@@ -1138,8 +1163,9 @@ export class App implements OnInit, OnDestroy {
 
   private async loadStoredVideos(): Promise<void> {
     try {
-      const response = await fetch('/api/videos');
-      const records = (await response.json()) as SubjectVideo[];
+      const response = await fetch(apiUrl('/api/videos'));
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{ videos?: SubjectVideo[] }>;
+      const records = result.data?.videos ?? [];
       const nextVideos: Record<SubjectId, SubjectVideo[]> = {
         matematica: [],
         historia: [],
@@ -1159,17 +1185,18 @@ export class App implements OnInit, OnDestroy {
 
   private async loadStoredQuizzes(): Promise<void> {
     try {
-      const response = await fetch('/api/quizzes');
-      const result = (await response.json().catch(() => ({}))) as {
+      const response = await fetch(apiUrl('/api/quizzes'));
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{
         quizzes?: Record<SubjectId, QuizQuestion[]>;
-      };
+      }>;
+      const quizzes = result.data?.quizzes;
 
-      if (!response.ok || !result.quizzes) {
+      if (!response.ok || !quizzes) {
         return;
       }
 
-      (Object.keys(result.quizzes) as SubjectId[]).forEach((subjectId) => {
-        this.replaceSubjectQuiz(subjectId, result.quizzes![subjectId]);
+      (Object.keys(quizzes) as SubjectId[]).forEach((subjectId) => {
+        this.replaceSubjectQuiz(subjectId, quizzes[subjectId]);
       });
       this.resetQuizEditor();
     } catch {
@@ -1210,17 +1237,18 @@ export class App implements OnInit, OnDestroy {
     }
 
     try {
-      const response = await fetch('/api/students');
-      const result = (await response.json().catch(() => ({}))) as {
+      const response = await fetch(apiUrl('/api/students'));
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{
         students?: StudentProgressRecord[];
-      };
+      }>;
+      const students = result.data?.students;
 
-      if (!response.ok || !result.students) {
+      if (!response.ok || !students) {
         this.studentsProgress.set([]);
         return;
       }
 
-      this.studentsProgress.set(result.students);
+      this.studentsProgress.set(students);
     } catch {
       this.studentsProgress.set([]);
     }

@@ -1,62 +1,57 @@
 # Aula Escolar Infantil
 
-Plataforma educativa escolar hecha con Angular y Express.
+Frontend Angular de la plataforma educativa escolar.
 
-## Que incluye
+El backend Express fue separado en:
 
-- Registro e inicio de sesion
-- 4 asignaturas con lecciones digitales
-- Evaluaciones editables
-- Videos por asignatura con bloqueo por progreso
-- Panel para estudiante, docente y gerente
-- Guardado local de usuarios, videos y evaluaciones
+```text
+C:\Users\PC1\Desktop\proyecto de grado\backend
+```
 
-## Ejecutar en tu computadora
+## Ejecutar en local
+
+En la carpeta del backend:
+
+```bash
+npm install
+npm run dev
+```
+
+En esta carpeta del frontend:
 
 ```bash
 npm install
 npm start
 ```
 
-## Publicar en Render con link permanente
+Cuando el frontend corre en `localhost:4200`, consume automaticamente la API en `http://localhost:4000`.
 
-Este proyecto ya incluye [render.yaml](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/render.yaml) para desplegarlo como servicio web con disco persistente.
+## Desplegar en Vercel
 
-### Lo que ya deje preparado
-
-- Script de produccion en [package.json](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/package.json):
-  - `npm run start:prod`
-- Ruta de almacenamiento configurable en [server.ts](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/src/server.ts)
-- Archivo [render.yaml](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/render.yaml) con:
-  - build del proyecto
-  - inicio del servidor
-  - disco persistente para usuarios, videos y evaluaciones
-
-### Pasos
-
-1. Sube este proyecto a GitHub.
-2. Crea una cuenta en [Render](https://render.com/).
-3. En Render, elige `New +` y luego `Blueprint`.
-4. Conecta tu repositorio de GitHub.
-5. Render detectara el archivo `render.yaml`.
-6. Confirma la creacion del servicio.
-7. Espera a que termine el deploy.
-8. Render te dara un link publico, por ejemplo:
+1. Despliega primero la carpeta `backend` como un proyecto de Vercel.
+2. Copia la URL publica del backend.
+3. En el proyecto Vercel del frontend configura esta variable:
 
 ```text
-https://aula-escolar-infantil.onrender.com
+NG_APP_API_URL=https://backend-plataforma-abi.vercel.app
 ```
 
-### Importante
+4. En el proyecto Vercel del backend configura esta variable:
 
-- Para que los datos no se borren, el servicio usa un disco persistente.
-- En Render, el disco persistente requiere un plan de pago.
-- Sin disco persistente, usuarios, videos y evaluaciones se perderian cuando el servicio se reinicie.
+```text
+FRONTEND_URL=https://aula-de-abi.vercel.app
+```
 
-## Archivos importantes
+5. Despliega esta carpeta `proyecto` como el frontend.
 
-- [app.ts](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/src/app/app.ts)
-- [app.html](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/src/app/app.html)
-- [app.css](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/src/app/app.css)
-- [server.ts](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/src/server.ts)
-- [render.yaml](/C:/Users/PC1/Desktop/proyecto%20de%20grado/proyecto/render.yaml)
+## Scripts
+
+```bash
+npm run build
+```
+
+Antes del build se genera `src/environments/environment.generated.ts` con la URL del backend.
+
+## Importante
+
+Vercel no ofrece almacenamiento persistente en el filesystem de las funciones serverless. El backend funciona con `/tmp` en Vercel, pero usuarios, videos y evaluaciones pueden perderse entre reinicios. Para produccion real conviene conectar una base de datos o storage externo.

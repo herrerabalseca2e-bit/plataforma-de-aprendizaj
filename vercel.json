@@ -7,27 +7,15 @@
       "config": {
         "distDir": "dist/proyecto/browser"
       }
-    },
-    {
-      "src": "src/server.ts",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "src/server.ts"
-    },
-    {
-      "src": "/uploaded-videos/(.*)",
-      "dest": "src/server.ts"
-    },
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "src/server.ts"
+      "dest": "/index.html"
     }
   ]
 }
