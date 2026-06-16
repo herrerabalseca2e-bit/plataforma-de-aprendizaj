@@ -1126,11 +1126,19 @@ export class App implements OnInit, OnDestroy {
 
   private async loadStoredVideos(): Promise<void> {
     try {
-      const response = await fetch('/app-storage/videos.json');
-      const records = ((await response.json().catch(() => [])) as LocalSubjectVideo[]).map((record) => ({
+      const response = await fetch(apiUrl('/api/videos'));
+      const result = (await response.json().catch(() => ({}))) as ApiResponse<{
+        videos?: SubjectVideo[];
+      }>;
+      const records = (result.data?.videos ?? []) as Array<SubjectVideo | LocalSubjectVideo>;
+      const normalizedVideos = records.map((record) => ({
         ...record,
-        url: `/app-storage/uploaded-videos/${record.fileName}`
+        url:
+          'url' in record && typeof record.url === 'string'
+            ? record.url
+            : `/app-storage/uploaded-videos/${record.fileName}`,
       }));
+
       const nextVideos: Record<SubjectId, SubjectVideo[]> = {
         matematica: [],
         historia: [],
@@ -1138,7 +1146,7 @@ export class App implements OnInit, OnDestroy {
         ciencias: []
       };
 
-      for (const record of records) {
+      for (const record of normalizedVideos) {
         nextVideos[record.subjectId].push(record);
       }
 
