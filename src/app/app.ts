@@ -81,6 +81,10 @@ interface LocalSubjectVideo {
   fileName: string;
 }
 
+function isLocalSubjectVideo(video: SubjectVideo | LocalSubjectVideo): video is LocalSubjectVideo {
+  return 'fileName' in video && typeof video.fileName === 'string';
+}
+
 interface QuizSession {
   subjectId: SubjectId;
   currentQuestionIndex: number;
@@ -1131,13 +1135,20 @@ export class App implements OnInit, OnDestroy {
         videos?: SubjectVideo[];
       }>;
       const records = (result.data?.videos ?? []) as Array<SubjectVideo | LocalSubjectVideo>;
-      const normalizedVideos = records.map((record) => ({
-        ...record,
-        url:
-          'url' in record && typeof record.url === 'string'
-            ? record.url
-            : `/app-storage/uploaded-videos/${record.fileName}`,
-      }));
+      const normalizedVideos = records.map((record) => {
+        if ('url' in record && typeof record.url === 'string') {
+          return record;
+        }
+
+        if (isLocalSubjectVideo(record)) {
+          return {
+            ...record,
+            url: `/app-storage/uploaded-videos/${encodeURIComponent(record.fileName)}`,
+          };
+        }
+
+        return record as SubjectVideo;
+      });
 
       const nextVideos: Record<SubjectId, SubjectVideo[]> = {
         matematica: [],
